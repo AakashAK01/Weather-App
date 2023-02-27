@@ -170,6 +170,8 @@ class _HomePageState extends State<HomePage> {
                                             child: InkWell(
                                               onTap: () {
                                                 appRouter.pop();
+                                                _searchController.clear();
+                                                search = "";
                                               },
                                               child: Container(
                                                 height: 40.h,
@@ -429,7 +431,19 @@ class _HomePageState extends State<HomePage> {
 
                             search = v;
                           },
+                          onSubmitted: (v) {
+                            if (search.isEmpty) {
+                              Fluttertoast.showToast(
+                                  msg: "Please Enter City Name",
+                                  fontSize: 16.sp);
+                            } else {
+                              context
+                                  .read<WeatherDataBloc>()
+                                  .add(OnSearchClicked(City: search));
+                            }
+                          },
                           keyboardType: TextInputType.name,
+                          textInputAction: TextInputAction.search,
                         ),
                       ),
                     ),
@@ -447,6 +461,7 @@ class _HomePageState extends State<HomePage> {
                               _searchController.clear();
                               setState(() {
                                 widget.navigated = false;
+                                search = "";
                               });
                               getCurrentCity();
                               _bloc.init(currentCity ?? "Chennai");
@@ -470,6 +485,7 @@ class _HomePageState extends State<HomePage> {
                                 context
                                     .read<WeatherDataBloc>()
                                     .add(OnSearchClicked(City: search));
+                                logger.i(search);
                               }
                             },
                           ),
