@@ -61,37 +61,64 @@ class _PreferredCityState extends State<PreferredCity> {
                     style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
                   ),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _cityList.length,
-                    itemBuilder: ((context, index) => InkWell(
-                          onTap: (() {
-                            appRouter.push(HomePageRoute(
-                                recentCity: _cityList[index]['city'],
-                                navigated: true));
-                            print(_cityList[index]['city']);
-                          }),
-                          child: Container(
-                            margin: const EdgeInsets.all(15),
-                            child: ListTile(
-                              title: Text(_cityList[index]['city']),
-                              trailing: SizedBox(
-                                width: 100.w,
-                                child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      InkWell(
-                                          onTap: () {
-                                            _deleteCity(_cityList[index]['id']);
-                                          },
-                                          child: Icon(Icons.delete))
-                                    ]),
-                              ),
+                if (_cityList.length == 0)
+                  Padding(
+                    padding: const EdgeInsets.all(40.0).r,
+                    child: Center(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 70.h,
+                          ),
+                          Image.asset('assets/no_dbs.webp'),
+                          SizedBox(
+                            height: 30.h,
+                          ),
+                          Text(
+                            "Explore some City by Searching",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: PRIMARY_COLOR,
+                              fontSize: 22.sp,
                             ),
                           ),
-                        )),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _cityList.length,
+                      itemBuilder: ((context, index) => InkWell(
+                            onTap: (() {
+                              appRouter.push(HomePageRoute(
+                                  recentCity: _cityList[index]['city'],
+                                  navigated: true));
+                              print(_cityList[index]['city']);
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.all(15),
+                              child: ListTile(
+                                title: Text(_cityList[index]['city']),
+                                trailing: SizedBox(
+                                  width: 100.w,
+                                  child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        InkWell(
+                                            onTap: () {
+                                              _deleteCity(
+                                                  _cityList[index]['id']);
+                                            },
+                                            child: Icon(Icons.delete))
+                                      ]),
+                                ),
+                              ),
+                            ),
+                          )),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
