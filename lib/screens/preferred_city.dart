@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:weather_app_latest/constants/app_constants.dart';
 import 'package:weather_app_latest/data/database/app_database.dart';
+import 'package:weather_app_latest/routers/router.gr.dart';
 
 import '../constants/ui_constant.dart';
 import '../logger.dart';
@@ -38,49 +39,63 @@ class _PreferredCityState extends State<PreferredCity> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: ListView.builder(
-        itemCount: _cityList.length,
-        itemBuilder: ((context, index) => Card(
-              color: Colors.grey,
-              margin: const EdgeInsets.all(15),
-              child: ListTile(
-                title: Text(_cityList[index]['city']),
-                trailing: SizedBox(
-                  width: 100.w,
-                  child:
-                      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                    InkWell(
-                        onTap: () {
-                          _deleteCity(_cityList[index]['id']);
-                        },
-                        child: Icon(Icons.delete))
-                  ]),
-                ),
+    return SafeArea(
+      child: Stack(
+        children: [
+          Scaffold(
+            body: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage("assets/iphone.jpg"), fit: BoxFit.cover),
               ),
-            )),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
-        tooltip: 'Enter City',
-        backgroundColor: Colors.red,
-        onPressed: () => {
-          showModalBottomSheet(
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(15.0),
+            ),
+          ),
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0).r,
+                  child: const Text(
+                    'Recent Search',
+                    style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
+                  ),
                 ),
-              ),
-              context: context,
-              builder: ((context) => Container(
-                    child: Column(children: [
-                      EnterCity(null),
-                    ]),
-                  )))
-        },
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _cityList.length,
+                    itemBuilder: ((context, index) => InkWell(
+                          onTap: (() {
+                            appRouter.push(HomePageRoute(
+                                recentCity: _cityList[index]['city'],
+                                navigated: true));
+                            print(_cityList[index]['city']);
+                          }),
+                          child: Container(
+                            margin: const EdgeInsets.all(15),
+                            child: ListTile(
+                              title: Text(_cityList[index]['city']),
+                              trailing: SizedBox(
+                                width: 100.w,
+                                child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      InkWell(
+                                          onTap: () {
+                                            _deleteCity(_cityList[index]['id']);
+                                          },
+                                          child: Icon(Icons.delete))
+                                    ]),
+                              ),
+                            ),
+                          ),
+                        )),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -137,8 +152,10 @@ class _PreferredCityState extends State<PreferredCity> {
   }
 
   Future<void> _addCity() async {
-    await CityDatabaseHelper.createCity(_cityTextController.text);
-    logger.i("...TOTAL${_cityList.length}");
+    if (_cityList.length < 5) {
+      await CityDatabaseHelper.createCity(_cityTextController.text);
+      logger.i("...TOTAL${_cityList.length}");
+    }
     _refreshCity();
   }
 

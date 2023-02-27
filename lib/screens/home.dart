@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flip_card/flip_card.dart';
+import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,25 +16,27 @@ import 'package:weather_app_latest/widgets/blur_effect.dart';
 import 'package:weather_app_latest/constants/app_constants.dart';
 import 'package:weather_app_latest/routers/router.gr.dart';
 
-import '../business_logic/bloc/weather_data_bloc.dart';
+import '../business_logic/home_bloc/weather_data_bloc.dart';
 import '../constants/ui_constant.dart';
+import '../data/database/app_database.dart';
 import '../logger.dart';
 import '../network connectivity/cubit/connectivity_cubit_cubit.dart';
 
-enum SampleItem { settings }
-
 class HomePage extends StatefulWidget {
-  HomePage({Key? key}) : super(key: key);
-
+  HomePage({Key? key, this.recentCity, this.navigated}) : super(key: key);
+  String? recentCity;
+  bool? navigated = false;
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
-  final TransformationController _transformationController =
-      TransformationController();
-  SampleItem? selectedMenu;
+  FlipCardController? _mainTempcontroller;
+  FlipCardController? _feelsTempcontroller;
+  FlipCardController? _windcontroller;
+  FlipCardController? _visiblecontroller;
+  FlipCardController? _aircontroller;
   String? currentCity;
   int _secondsRemaining = 300;
 
@@ -46,7 +49,13 @@ class _HomePageState extends State<HomePage> {
   final _bloc = WeatherDataBloc();
   @override
   void initState() {
+    _mainTempcontroller = FlipCardController();
+    _feelsTempcontroller = FlipCardController();
+    _windcontroller = FlipCardController();
+    _visiblecontroller = FlipCardController();
+    _aircontroller = FlipCardController();
     getPermission();
+    logger.i(widget.navigated);
 
     super.initState();
   }
@@ -73,9 +82,17 @@ class _HomePageState extends State<HomePage> {
     );
     Placemark placemark = placemarks[0];
     //logger.i(placemarks);
-    currentCity = placemark.locality;
-    logger.i(currentCity);
-    _bloc.init(currentCity ?? "Chennai");
+    if (widget.navigated == true) {
+      print(widget.recentCity);
+      setState(() {
+        currentCity = widget.recentCity;
+      });
+      _bloc.init(currentCity ?? "Chennai");
+    } else {
+      currentCity = placemark.locality;
+      logger.i(currentCity);
+      _bloc.init(currentCity ?? "Chennai");
+    }
 
     // _timer = Timer.periodic(Duration(seconds: 5), (timer) {
     //   setState(() {
@@ -84,286 +101,295 @@ class _HomePageState extends State<HomePage> {
     // });
   }
 
-  String _formatTime(int seconds) {
-    int minutes = seconds ~/ 60;
-    int remainingSeconds = seconds % 60;
-    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => _bloc,
-      child: Stack(
-        children: [
-          Scaffold(
-            body: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                    image: AssetImage("assets/iphone.jpg"), fit: BoxFit.cover),
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Scaffold(
+              body: Container(
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                      image: AssetImage("assets/iphone.jpg"),
+                      fit: BoxFit.cover),
+                ),
               ),
             ),
-          ),
-          Scaffold(
-              backgroundColor: Colors.transparent,
-              body: SingleChildScrollView(
-                child: Builder(builder: (context) {
-                  final _internetState =
-                      context.watch<ConnectivityCubit>().state;
-                  if (_internetState is ConnectivityConnected) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        BlocConsumer<WeatherDataBloc, WeatherDataState>(
-                          listener: (context, state) {
-                            if (state is DataError) {
-                              logger.i("Error");
-                              showDialog(
-                                  context: context,
-                                  builder: (_) {
-                                    return AlertDialog(
-                                      title: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          SizedBox(height: 15.h),
-                                          Text(
-                                            (state.msg),
-                                            style: TextStyle(
-                                              fontSize: 15.sp,
-                                              color: PRIMARY_COLOR,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      content: Stack(
-                                        alignment: Alignment.center,
-                                        children: <Widget>[
-                                          Image.asset(
-                                            'assets/error.png',
-                                            height: 200,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ],
-                                      ),
-                                      actions: [
-                                        Padding(
-                                          padding: EdgeInsets.fromLTRB(
-                                              0, 0, 0, 24.h),
-                                          child: InkWell(
-                                            onTap: () {
-                                              appRouter.pop();
-                                            },
-                                            child: Container(
-                                              height: 40.h,
-                                              width: 296.w,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(5.r),
-                                                border: Border.all(
-                                                    color: PRIMARY_COLOR),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  "Try Again",
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 18.sp,
-                                                      color: PRIMARY_COLOR),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    );
-                                  });
-                            }
-                          },
-                          bloc: _bloc,
-                          builder: (context, state) {
-                            logger.i(state);
-                            if (state is DataLoading) {
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 350.0).r,
-                                child: Center(
-                                  child: LoadingAnimationWidget.discreteCircle(
-                                    color: Colors.green,
-                                    size: 30.sp,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              return Container(
-                                  width: ScreenUtil().screenWidth,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      _searchAndFilterBar(),
-                                      Text("Today's Weather Condition",
-                                          style: TextStyle(
-                                              fontSize: 30.sp,
-                                              color: PRIMARY_COLOR)),
-                                      SizedBox(
-                                        height: 10.h,
-                                      ),
-                                      Text(
-                                        "${_bloc.weatherDataModel?.current?.condition?.text}",
-                                        //_formatTime(_secondsRemaining),
-                                        style: TextStyle(
-                                            fontSize: 30.sp,
-                                            color: PRIMARY_COLOR),
-                                      ),
-                                      if (_bloc.weatherDataModel?.current
-                                              ?.isDay ==
-                                          1)
-                                        Padding(
-                                          padding: const EdgeInsets.all(40.0).r,
-                                          child: Image.asset("assets/sunny.png",
-                                              height: 150.h, fit: BoxFit.fill),
-                                        )
-                                      else
-                                        Padding(
-                                          padding: const EdgeInsets.all(40.0).r,
-                                          child: Image.asset(
-                                              "assets/night.webp",
-                                              height: 150.h,
-                                              fit: BoxFit.fill),
-                                        ),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 75).r,
-                                        child: FlipCard(
-                                          fill: Fill.fillFront,
-                                          direction: FlipDirection.VERTICAL,
-                                          side: CardSide.FRONT,
-                                          front: Container(
-                                            width: 150.w,
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                    "${_bloc.weatherDataModel?.current?.tempC}",
-                                                    style: TextStyle(
-                                                        fontSize: 40.sp,
-                                                        color: PRIMARY_COLOR)),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                              bottom: 12)
-                                                          .r
-                                                          .r,
-                                                  child: Text(
-                                                    '\u00B0C',
-                                                    style: TextStyle(
-                                                        fontSize: 18.sp,
-                                                        color: PRIMARY_COLOR),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          back: Container(
-                                            width: 150.w,
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                    "${_bloc.weatherDataModel?.current?.tempF}",
-                                                    style: TextStyle(
-                                                        fontSize: 40.sp,
-                                                        color: PRIMARY_COLOR)),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                              bottom: 12.0)
-                                                          .r
-                                                          .r,
-                                                  child: Text(
-                                                    '\u00B0F',
-                                                    style: TextStyle(
-                                                        fontSize: 18.sp,
-                                                        color: PRIMARY_COLOR),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 8.0),
-                                        child: Text(
-                                          "${_bloc.weatherDataModel?.location?.name}",
-                                          style: TextStyle(
-                                              fontSize: 20.sp,
-                                              color: PRIMARY_COLOR),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 10.h,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                                left: 22.0, top: 10)
-                                            .r,
-                                        child: Row(
+            Scaffold(
+                backgroundColor: Colors.transparent,
+                body: SingleChildScrollView(
+                  child: Builder(builder: (context) {
+                    final _internetState =
+                        context.watch<ConnectivityCubit>().state;
+                    if (_internetState is ConnectivityConnected) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          BlocConsumer<WeatherDataBloc, WeatherDataState>(
+                            listener: (context, state) {
+                              if (state is DataError) {
+                                logger.i("Error");
+                                showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      return AlertDialog(
+                                        title: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           mainAxisAlignment:
-                                              MainAxisAlignment.start,
+                                              MainAxisAlignment.center,
                                           children: [
-                                            Text("Weather Details:",
-                                                style: TextStyle(
-                                                    fontSize: 15.sp,
-                                                    color: PRIMARY_COLOR)),
+                                            SizedBox(height: 15.h),
+                                            Text(
+                                              (state.msg),
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                color: PRIMARY_COLOR,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
                                           ],
                                         ),
-                                      ),
-                                      SizedBox(
-                                        height: 10.h,
-                                      ),
-                                      weatherDetails(),
-                                    ],
-                                  ));
-                            }
-                          },
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.all(40.0).r,
-                      child: Center(
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: 70.h,
-                            ),
-                            Image.asset('assets/no_internet.webp'),
-                            SizedBox(
-                              height: 30.h,
-                            ),
-                            Text(
-                              "Please Connect To Network",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: PRIMARY_COLOR,
-                                fontSize: 22.sp,
+                                        content: Stack(
+                                          alignment: Alignment.center,
+                                          children: <Widget>[
+                                            Image.asset(
+                                              'assets/error.png',
+                                              height: 200,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          Padding(
+                                            padding: EdgeInsets.fromLTRB(
+                                                0, 0, 0, 24.h),
+                                            child: InkWell(
+                                              onTap: () {
+                                                appRouter.pop();
+                                              },
+                                              child: Container(
+                                                height: 40.h,
+                                                width: 296.w,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          5.r),
+                                                  border: Border.all(
+                                                      color: PRIMARY_COLOR),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Try Again",
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 18.sp,
+                                                        color: PRIMARY_COLOR),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      );
+                                    });
+                              }
+                            },
+                            bloc: _bloc,
+                            builder: (context, state) {
+                              logger.i(state);
+                              if (state is DataLoading) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 350.0).r,
+                                  child: Center(
+                                    child:
+                                        LoadingAnimationWidget.discreteCircle(
+                                      color: Colors.green,
+                                      size: 30.sp,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return Container(
+                                    width: ScreenUtil().screenWidth,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        _searchAndFilterBar(),
+                                        Text("Today's Weather Condition",
+                                            style: TextStyle(
+                                                fontSize: 30.sp,
+                                                color: PRIMARY_COLOR)),
+                                        SizedBox(
+                                          height: 10.h,
+                                        ),
+                                        Text(
+                                          "${_bloc.weatherDataModel?.current?.condition?.text}",
+                                          //_formatTime(_secondsRemaining),
+                                          style: TextStyle(
+                                              fontSize: 30.sp,
+                                              color: PRIMARY_COLOR),
+                                        ),
+                                        if (_bloc.weatherDataModel?.current
+                                                ?.isDay ==
+                                            1)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.all(40.0).r,
+                                            child: Image.asset(
+                                                "assets/sunny.png",
+                                                height: 150.h,
+                                                fit: BoxFit.fill),
+                                          )
+                                        else
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.all(40.0).r,
+                                            child: Image.asset(
+                                                "assets/night.webp",
+                                                height: 150.h,
+                                                fit: BoxFit.fill),
+                                          ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 75).r,
+                                          child: FlipCard(
+                                            controller: _mainTempcontroller,
+                                            autoFlipDuration:
+                                                Duration(seconds: 15),
+                                            fill: Fill.fillFront,
+                                            direction: FlipDirection.VERTICAL,
+                                            side: CardSide.FRONT,
+                                            front: Container(
+                                              width: 150.w,
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                      "${_bloc.weatherDataModel?.current?.tempC}",
+                                                      style: TextStyle(
+                                                          fontSize: 40.sp,
+                                                          color:
+                                                              PRIMARY_COLOR)),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                                bottom: 12)
+                                                            .r
+                                                            .r,
+                                                    child: Text(
+                                                      '\u00B0C',
+                                                      style: TextStyle(
+                                                          fontSize: 18.sp,
+                                                          color: PRIMARY_COLOR),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            back: Container(
+                                              width: 150.w,
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                      "${_bloc.weatherDataModel?.current?.tempF}",
+                                                      style: TextStyle(
+                                                          fontSize: 40.sp,
+                                                          color:
+                                                              PRIMARY_COLOR)),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                                bottom: 12.0)
+                                                            .r
+                                                            .r,
+                                                    child: Text(
+                                                      '\u00B0F',
+                                                      style: TextStyle(
+                                                          fontSize: 18.sp,
+                                                          color: PRIMARY_COLOR),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8.0),
+                                          child: Text(
+                                            "${_bloc.weatherDataModel?.location?.name}",
+                                            style: TextStyle(
+                                                fontSize: 20.sp,
+                                                color: PRIMARY_COLOR),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 10.h,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                                  left: 22.0, top: 10)
+                                              .r,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Text("Weather Details:",
+                                                  style: TextStyle(
+                                                      fontSize: 15.sp,
+                                                      color: PRIMARY_COLOR)),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 10.h,
+                                        ),
+                                        weatherDetails(),
+                                      ],
+                                    ));
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.all(40.0).r,
+                        child: Center(
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 70.h,
                               ),
-                            ),
-                          ],
+                              Image.asset('assets/no_internet.webp'),
+                              SizedBox(
+                                height: 30.h,
+                              ),
+                              Text(
+                                "Please Connect To Network",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: PRIMARY_COLOR,
+                                  fontSize: 22.sp,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                }),
-              )),
-        ],
+                      );
+                    }
+                  }),
+                )),
+          ],
+        ),
       ),
     );
   }
@@ -372,7 +398,7 @@ class _HomePageState extends State<HomePage> {
     return BlocBuilder<WeatherDataBloc, WeatherDataState>(
       builder: (context, state) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 50, 0, 70).r,
+          padding: const EdgeInsets.fromLTRB(25, 30, 0, 70).r,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -419,6 +445,10 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onTap: () {
                               _searchController.clear();
+                              setState(() {
+                                widget.navigated = false;
+                              });
+                              getCurrentCity();
                               _bloc.init(currentCity ?? "Chennai");
                             },
                           ),
@@ -431,7 +461,7 @@ class _HomePageState extends State<HomePage> {
                               size: 22.sp,
                               color: PRIMARY_COLOR,
                             ),
-                            onTap: () {
+                            onTap: () async {
                               if (search.isEmpty) {
                                 Fluttertoast.showToast(
                                     msg: "Please Enter City Name",
@@ -449,34 +479,31 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              Expanded(
-                child: SizedBox(),
+              SizedBox(
+                width: 10.w,
               ),
               InkWell(
                 onTap: () {
                   appRouter.push(PreferredCityRoute());
                 },
-                child: Icon(Icons.location_city_rounded),
-              ),
-              Expanded(
-                child: SizedBox(),
+                child: Icon(Icons.timelapse),
               ),
               PopupMenuButton<int>(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5.r)),
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 1,
-                    child: Row(
-                      children: [
-                        Icon(Icons.settings),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("Settings")
-                      ],
-                    ),
-                  ),
+                  // PopupMenuItem(
+                  //   value: 1,
+                  //   child: Row(
+                  //     children: [
+                  //       Icon(Icons.settings),
+                  //       SizedBox(
+                  //         width: 10,
+                  //       ),
+                  //       Text("Settings")
+                  //     ],
+                  //   ),
+                  // ),
                   PopupMenuItem(
                     value: 2,
                     child: Row(
@@ -499,10 +526,16 @@ class _HomePageState extends State<HomePage> {
                     appRouter.push(SettingPageRoute());
                   }
                   if (value == 2) {
-                    Fluttertoast.showToast(
-                      msg: "Tap where you need to change the units",
-                      fontSize: 16.sp,
-                    );
+                    _mainTempcontroller?.toggleCard();
+                    _feelsTempcontroller?.toggleCard();
+                    _visiblecontroller?.toggleCard();
+                    _windcontroller?.toggleCard();
+                    _aircontroller?.toggleCard();
+
+                    // Fluttertoast.showToast(
+                    //   msg: "Tap where you need to change the units",
+                    //   fontSize: 16.sp,
+                    // );
                   }
                 },
               ),
@@ -520,6 +553,8 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FlipCard(
+              controller: _feelsTempcontroller,
+              autoFlipDuration: Duration(seconds: 5),
               fill: Fill
                   .fillFront, // Fill the back side of the card to make in the same size as the front.
               direction: FlipDirection.VERTICAL, // default
@@ -610,6 +645,8 @@ class _HomePageState extends State<HomePage> {
                   )),
             ),
             FlipCard(
+              controller: _windcontroller,
+              autoFlipDuration: Duration(seconds: 5),
               fill: Fill
                   .fillFront, // Fill the back side of the card to make in the same size as the front.
               direction: FlipDirection.VERTICAL,
@@ -839,6 +876,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FlipCard(
+              autoFlipDuration: Duration(seconds: 5),
               fill: Fill
                   .fillFront, // Fill the back side of the card to make in the same size as the front.
               direction: FlipDirection.VERTICAL,
@@ -918,6 +956,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             FlipCard(
+              autoFlipDuration: Duration(seconds: 5),
               fill: Fill
                   .fillFront, // Fill the back side of the card to make in the same size as the front.
               direction: FlipDirection.VERTICAL,

@@ -1,7 +1,8 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter/rendering.dart';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../data/database/app_database.dart';
 import '../../data/weather_data_model/weather_data_model.dart';
 import '../../logger.dart';
 import '../../repository/weather_repo.dart';
@@ -20,11 +21,6 @@ class WeatherDataBloc extends Bloc<WeatherDataEvent, WeatherDataState> {
     emit(DataLoading());
     final _repo = WeatherRepo();
 
-    // else if (_locresult.isPermanentlyDenied) {
-    //   emit(LocManualGuide());
-    //   return;
-    // }
-
     final result = await _repo.getAllCurrentWeatherDetails(city);
     if (result.isRight()) {
       weatherDataModel = _repo.weatherData;
@@ -42,7 +38,6 @@ class WeatherDataBloc extends Bloc<WeatherDataEvent, WeatherDataState> {
       emit(DataLoaded());
       weatherDataModel = _repo.weatherData;
       print("FROM TIMER BLOCCCCCCCCCCCCCCCCCCCCCcc");
-      logger.d(weatherDataModel);
     }
   }
 
@@ -55,6 +50,10 @@ class WeatherDataBloc extends Bloc<WeatherDataEvent, WeatherDataState> {
       weatherDataModel = _repo.weatherData;
 
       print("FROM EVENT BLOCCCCCCCCCCCCCCCCCCCCCcc");
+      await CityDatabaseHelper.createCity(
+          weatherDataModel?.location?.name ?? "");
+
+      logger.i(weatherDataModel?.location?.name);
       logger.d(weatherDataModel);
       emit(DataLoaded());
     } else {
