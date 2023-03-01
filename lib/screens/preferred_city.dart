@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:lottie/lottie.dart';
 import 'package:weather_app_latest/constants/app_constants.dart';
 import 'package:weather_app_latest/data/database/app_database.dart';
 import 'package:weather_app_latest/routers/router.gr.dart';
@@ -44,82 +45,86 @@ class _PreferredCityState extends State<PreferredCity> {
         children: [
           Scaffold(
             body: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                    image: AssetImage("assets/iphone.jpg"), fit: BoxFit.cover),
-              ),
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+              child: Lottie.asset('assets/background.json', fit: BoxFit.cover),
             ),
           ),
           Scaffold(
             backgroundColor: Colors.transparent,
-            body: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0).r,
-                  child: const Text(
-                    'Recent Search',
-                    style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
-                  ),
-                ),
-                if (_cityList.length == 0)
-                  Padding(
-                    padding: const EdgeInsets.all(40.0).r,
-                    child: Center(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 70.h,
-                          ),
-                          Image.asset('assets/no_dbs.webp'),
-                          SizedBox(
-                            height: 30.h,
-                          ),
-                          Text(
-                            "Explore some City by Searching",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: PRIMARY_COLOR,
-                              fontSize: 22.sp,
-                            ),
-                          ),
-                        ],
+            body: Container(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0).r,
+                      child: const Text(
+                        'Recent Search',
+                        style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
                       ),
                     ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _cityList.length,
-                      itemBuilder: ((context, index) => InkWell(
-                            onTap: (() {
-                              appRouter.push(HomePageRoute(
-                                  recentCity: _cityList[index]['city'],
-                                  navigated: true));
-                              print(_cityList[index]['city']);
-                            }),
-                            child: Container(
-                              margin: const EdgeInsets.all(15),
-                              child: ListTile(
-                                title: Text(_cityList[index]['city']),
-                                trailing: SizedBox(
-                                  width: 100.w,
-                                  child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        InkWell(
-                                            onTap: () {
-                                              _deleteCity(
-                                                  _cityList[index]['id']);
-                                            },
-                                            child: Icon(Icons.delete))
-                                      ]),
+                    if (_cityList.length == 0)
+                      Padding(
+                        padding: const EdgeInsets.all(40.0).r,
+                        child: Center(
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 70.h,
+                              ),
+                              Lottie.asset('assets/search.json'),
+                              SizedBox(
+                                height: 30.h,
+                              ),
+                              Text(
+                                "Oops!! Looks like you have no recents.",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: PRIMARY_COLOR,
+                                  fontSize: 22.sp,
                                 ),
                               ),
-                            ),
-                          )),
-                    ),
-                  ),
-              ],
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _cityList.length,
+                          itemBuilder: ((context, index) => InkWell(
+                                onTap: (() {
+                                  appRouter.push(HomePageRoute(
+                                      recentCity: _cityList[index]['city'],
+                                      navigated: true));
+                                  print(_cityList[index]['city']);
+                                }),
+                                child: Container(
+                                  margin: const EdgeInsets.all(15),
+                                  child: ListTile(
+                                    title: Text(_cityList[index]['city']),
+                                    trailing: SizedBox(
+                                      width: 100.w,
+                                      child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            InkWell(
+                                                onTap: () {
+                                                  _deleteCity(
+                                                      _cityList[index]['id']);
+                                                },
+                                                child: Icon(Icons.delete))
+                                          ]),
+                                    ),
+                                  ),
+                                ),
+                              )),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

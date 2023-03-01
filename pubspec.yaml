@@ -63,6 +63,7 @@ dependencies:
   path_provider: ^2.0.13
   sqflite: ^2.2.4+1
   rename: ^2.1.1
+  lottie: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -92,18 +93,16 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/mist.png
-    - assets/rain.png
-    - assets/cloud.png
-    - assets/sunny.png
-    - assets/night.webp
-    - assets/no_internet.webp
-    - assets/background.jpg
-    - assets/iphone.jpg
-    - assets/error.png
-    - assets/no_db.jpg
-    - assets/no_dbs.webp
-
+    - assets/loading.json
+    - assets/cloudy sunny.json
+    - assets/day.json
+    - assets/night.json
+    - assets/search.json
+    - assets/cloud loading.json
+    - assets/night_icon.json
+    - assets/morning.json
+    - assets/no_result.json
+    - assets/no_internet.json
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

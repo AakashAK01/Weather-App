@@ -8,7 +8,7 @@
 PRODUCT_NAME = weather_app_latest
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.weatherAppLatest
+PRODUCT_BUNDLE_IDENTIFIER = com.aakashak01.weatherapp;
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.
