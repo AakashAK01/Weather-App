@@ -103,6 +103,7 @@ flutter:
     - assets/morning.json
     - assets/no_result.json
     - assets/no_internet.json
+    - assets/recent_search.json
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

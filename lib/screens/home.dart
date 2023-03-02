@@ -129,12 +129,19 @@ class _HomePageState extends State<HomePage> {
                           child: Lottie.asset('assets/morning.json',
                               fit: BoxFit.cover),
                         )
-                      : Container(
-                          height: double.infinity,
-                          width: double.infinity,
-                          child: Lottie.asset('assets/night.json',
-                              fit: BoxFit.cover),
-                        ),
+                      : _bloc.weatherDataModel?.current?.isDay == null
+                          ? Container(
+                              height: double.infinity,
+                              width: double.infinity,
+                              child: Lottie.asset('assets/background.json',
+                                  fit: BoxFit.cover),
+                            )
+                          : Container(
+                              height: double.infinity,
+                              width: double.infinity,
+                              child: Lottie.asset('assets/night.json',
+                                  fit: BoxFit.cover),
+                            ),
                 ),
                 Scaffold(
                     backgroundColor: Colors.transparent,

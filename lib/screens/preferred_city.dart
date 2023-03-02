@@ -17,9 +17,11 @@ class PreferredCity extends StatefulWidget {
   State<PreferredCity> createState() => _PreferredCityState();
 }
 
-class _PreferredCityState extends State<PreferredCity> {
+class _PreferredCityState extends State<PreferredCity>
+    with SingleTickerProviderStateMixin {
   String? city;
   TextEditingController _cityTextController = TextEditingController();
+  late AnimationController controller;
   List<Map<String, dynamic>> _cityList = [];
   bool _isLoading = true;
 
@@ -35,7 +37,15 @@ class _PreferredCityState extends State<PreferredCity> {
   void initState() {
     super.initState();
     _refreshCity();
+    controller =
+        AnimationController(vsync: this, duration: (Duration(seconds: 3)));
     logger.i("...TOTAL${_cityList.length}");
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -44,86 +54,90 @@ class _PreferredCityState extends State<PreferredCity> {
       child: Stack(
         children: [
           Scaffold(
-            body: Container(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              child: Lottie.asset('assets/background.json', fit: BoxFit.cover),
+            body: SizedBox(
+              height: double.infinity,
+              width: double.infinity,
+              child: Lottie.asset(
+                'assets/recent_search.json',
+                fit: BoxFit.cover,
+                repeat: false,
+                //     controller: controller, onLoaded: (composition) {
+                //   controller.forward();
+                // }
+              ),
             ),
           ),
           Scaffold(
             backgroundColor: Colors.transparent,
-            body: Container(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0).r,
-                      child: const Text(
-                        'Recent Search',
-                        style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
-                      ),
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0).r,
+                    child: const Text(
+                      'Recent Search',
+                      style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
                     ),
-                    if (_cityList.length == 0)
-                      Padding(
-                        padding: const EdgeInsets.all(40.0).r,
-                        child: Center(
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: 70.h,
+                  ),
+                  if (_cityList.length == 0)
+                    Padding(
+                      padding: const EdgeInsets.all(40.0).r,
+                      child: Center(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 70.h,
+                            ),
+                            Lottie.asset('assets/search.json', repeat: false),
+                            SizedBox(
+                              height: 30.h,
+                            ),
+                            Text(
+                              "Oops!! Looks like you have no recents.",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: PRIMARY_COLOR,
+                                fontSize: 22.sp,
                               ),
-                              Lottie.asset('assets/search.json'),
-                              SizedBox(
-                                height: 30.h,
-                              ),
-                              Text(
-                                "Oops!! Looks like you have no recents.",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: PRIMARY_COLOR,
-                                  fontSize: 22.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _cityList.length,
-                          itemBuilder: ((context, index) => InkWell(
-                                onTap: (() {
-                                  appRouter.push(HomePageRoute(
-                                      recentCity: _cityList[index]['city'],
-                                      navigated: true));
-                                  print(_cityList[index]['city']);
-                                }),
-                                child: Container(
-                                  margin: const EdgeInsets.all(15),
-                                  child: ListTile(
-                                    title: Text(_cityList[index]['city']),
-                                    trailing: SizedBox(
-                                      width: 100.w,
-                                      child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            InkWell(
-                                                onTap: () {
-                                                  _deleteCity(
-                                                      _cityList[index]['id']);
-                                                },
-                                                child: Icon(Icons.delete))
-                                          ]),
-                                    ),
-                                  ),
-                                ),
-                              )),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    )
+                  else
+                    ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: _cityList.length,
+                      itemBuilder: ((context, index) => InkWell(
+                            onTap: (() {
+                              appRouter.push(HomePageRoute(
+                                  recentCity: _cityList[index]['city'],
+                                  navigated: true));
+                              print(_cityList[index]['city']);
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.all(15),
+                              child: ListTile(
+                                title: Text(_cityList[index]['city']),
+                                trailing: SizedBox(
+                                  width: 100.w,
+                                  child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        InkWell(
+                                            onTap: () {
+                                              _deleteCity(
+                                                  _cityList[index]['id']);
+                                            },
+                                            child: Icon(Icons.delete))
+                                      ]),
+                                ),
+                              ),
+                            ),
+                          )),
+                    ),
+                ],
               ),
             ),
           ),
