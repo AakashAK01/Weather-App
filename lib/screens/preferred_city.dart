@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:lottie/lottie.dart';
 import 'package:weather_app_latest/constants/app_constants.dart';
 import 'package:weather_app_latest/data/database/app_database.dart';
 import 'package:weather_app_latest/routers/router.gr.dart';
@@ -16,9 +17,11 @@ class PreferredCity extends StatefulWidget {
   State<PreferredCity> createState() => _PreferredCityState();
 }
 
-class _PreferredCityState extends State<PreferredCity> {
+class _PreferredCityState extends State<PreferredCity>
+    with SingleTickerProviderStateMixin {
   String? city;
   TextEditingController _cityTextController = TextEditingController();
+  late AnimationController controller;
   List<Map<String, dynamic>> _cityList = [];
   bool _isLoading = true;
 
@@ -34,7 +37,15 @@ class _PreferredCityState extends State<PreferredCity> {
   void initState() {
     super.initState();
     _refreshCity();
+    controller =
+        AnimationController(vsync: this, duration: (Duration(seconds: 3)));
     logger.i("...TOTAL${_cityList.length}");
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -43,52 +54,60 @@ class _PreferredCityState extends State<PreferredCity> {
       child: Stack(
         children: [
           Scaffold(
-            body: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                    image: AssetImage("assets/iphone.jpg"), fit: BoxFit.cover),
+            body: SizedBox(
+              height: double.infinity,
+              width: double.infinity,
+              child: Lottie.asset(
+                'assets/recent_search.json',
+                fit: BoxFit.cover,
+                repeat: false,
+                //     controller: controller, onLoaded: (composition) {
+                //   controller.forward();
+                // }
               ),
             ),
           ),
           Scaffold(
             backgroundColor: Colors.transparent,
-            body: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0).r,
-                  child: const Text(
-                    'Recent Search',
-                    style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
-                  ),
-                ),
-                if (_cityList.length == 0)
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
                   Padding(
-                    padding: const EdgeInsets.all(40.0).r,
-                    child: Center(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 70.h,
-                          ),
-                          Image.asset('assets/no_dbs.webp'),
-                          SizedBox(
-                            height: 30.h,
-                          ),
-                          Text(
-                            "Explore some City by Searching",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: PRIMARY_COLOR,
-                              fontSize: 22.sp,
-                            ),
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.all(16.0).r,
+                    child: const Text(
+                      'Recent Search',
+                      style: TextStyle(fontSize: 24.0, color: PRIMARY_COLOR),
                     ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
+                  ),
+                  if (_cityList.length == 0)
+                    Padding(
+                      padding: const EdgeInsets.all(40.0).r,
+                      child: Center(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 70.h,
+                            ),
+                            Lottie.asset('assets/search.json', repeat: false),
+                            SizedBox(
+                              height: 30.h,
+                            ),
+                            Text(
+                              "Oops!! Looks like you have no recents.",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: PRIMARY_COLOR,
+                                fontSize: 22.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
                       itemCount: _cityList.length,
                       itemBuilder: ((context, index) => InkWell(
                             onTap: (() {
@@ -118,8 +137,8 @@ class _PreferredCityState extends State<PreferredCity> {
                             ),
                           )),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
